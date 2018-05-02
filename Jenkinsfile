@@ -28,7 +28,7 @@ environment {
             }
         }
         stage('plan') {
-            steps {{
+            steps {
                 sh  """
                     ${TERRAFORM_CMD} plan -out=tfplan -input=false
                     """
@@ -37,7 +37,8 @@ environment {
                     input(id: "Deploy Gate", message: "Deploy ${params.project_name}?", ok: 'Deploy')
                   }
                 }
-            }
+
+        }
         }
         stage('apply') {
             steps {
@@ -47,5 +48,4 @@ environment {
 }
         }
     }
-}
 }
