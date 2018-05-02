@@ -29,9 +29,9 @@ environment {
         }
         stage('plan') {
             steps {
-                sh  """
+                sh  '''
                     ${TERRAFORM_CMD} plan -out=tfplan -input=false
-                    """
+                    '''
                 script {
                   timeout(time: 10, unit: 'MINUTES') {
                     input(id: "Deploy Gate", message: "Deploy ${params.project_name}?", ok: 'Deploy')
@@ -42,9 +42,9 @@ environment {
         }
         stage('apply') {
             steps {
-                sh  """
+                sh  '''
                     ${TERRAFORM_CMD} apply -lock=false -input=false tfplan
-                    """
+                   '''
 }
         }
     }
