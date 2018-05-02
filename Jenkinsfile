@@ -1,13 +1,10 @@
-pipeline {
-  agent none
-  stages {
-    stage('AWS Deployment') {
-      steps {
-            sh '''
-               terraform init
-               terraform apply
-            '''
-        }
-    }
-  }
+node {
+	stage 'Checkout'
+		checkout scm
+
+	stage 'Build'
+		sh '''
+                       terraform init
+                       terraform apply
+        '''
 }
