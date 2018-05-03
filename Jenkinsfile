@@ -1,51 +1,31 @@
-pipeline {
-    agent {
-        node {
-            label 'master'
-        }
-    }
-environment {
-        TERRAFORM_CMD = 'docker run --network host " -w /app -v ${HOME}/.aws:/root/.aws -v ${HOME}/.ssh:/root/.ssh -v `pwd`:/app hashicorp/terraform:light'
-    }
-    stages {
-        stage('checkout repo') {
-            steps {
-              checkout scm
-            }
-        }
-        stage('pull latest light terraform image') {
-            steps {
-                sh  """
-                    docker pull hashicorp/terraform:light
-                    """
-            }
-        }
-        stage('init') {
-            steps {
-                sh  """
-                    ${TERRAFORM_CMD} init -backend=true -input=false
-                    """
-            }
-        }
-        stage('plan') {
-            steps {
-                sh  '''
-                    ${TERRAFORM_CMD} plan -out=tfplan -input=false
-                    '''
-                script {
-                  timeout(time: 10, unit: 'MINUTES') {
-                    input(id: "Deploy Gate", message: "Deploy ${params.project_name}?", ok: 'Deploy')
-                  }
-                }
+node {
+  env.PATH += ":/opt/terraform_0.11.7/"
 
-        }
-        }
-        stage('apply') {
-            steps {
-                sh  '''
-                    ${TERRAFORM_CMD} apply -lock=false -input=false tfplan
-                   '''
-}
-        }
-    }
+  stage ('Checkout') {
+    checkout scm
+  }
+
+  stage ('Terraform Plan') {
+    sh 'terraform plan -no-color -out=create.tfplan'
+  }
+
+  // Optional wait for approval
+  input 'Deploy stack?'
+
+  stage ('Terraform Apply') {
+    sh 'terraform apply -no-color create.tfplan'
+  }
+
+  stage ('Post Run Tests') {
+    echo "Insert your infrastructure test of choice and/or application validation here."
+    sleep 2
+    sh 'terraform show'
+  }
+
+  stage ('Notification') {
+    mail from: "jenkins@mycompany.com",
+         to: "devopsteam@mycompany.com",
+         subject: "Terraform build complete",
+         body: "Jenkins job ${env.JOB_NAME} - build ${env.BUILD_NUMBER} complete"
+  }
 }
